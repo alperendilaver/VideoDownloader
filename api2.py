@@ -37,7 +37,7 @@ async def download_video(video: VideoURL):
         return FileResponse(
             path=file_path,
             filename=os.path.basename(file_path),
-            media_type='application/octet-stream'
+            media_type='video/mp4'
         )
             
     except Exception as e:
