@@ -24,8 +24,12 @@ async def download_video(video: VideoURL):
     
     try:
         ydl_opts = {
-            'outtmpl': f'{save_path}/%(title)s.%(ext)s',
-            'format': 'best',
+             'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+             'outtmpl': f'{save_path}/%(title)s.%(ext)s',
+             'postprocessors': [{
+                 'key': 'FFmpegVideoConvertor',
+                 'preferedformat': 'mp4',
+             }],
         }
         
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
