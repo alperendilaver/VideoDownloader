@@ -3,9 +3,16 @@ from fastapi.responses import FileResponse
 from pydantic import BaseModel
 import yt_dlp
 import os
+from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Tüm originlere izin ver
+    allow_credentials=True,
+    allow_methods=["*"],  # Tüm HTTP metodlarına izin ver
+    allow_headers=["*"],  # Tüm headerlara izin ver
+)
 class DownloadRequest(BaseModel):
     url: str
     format: str = "mp4"  # mp4 veya mp3
