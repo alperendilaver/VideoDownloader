@@ -6,8 +6,10 @@ import os
 
 app = FastAPI()
 
-class VideoURL(BaseModel):
+class DownloadRequest(BaseModel):
     url: str
+    format: str = "mp4"  # mp4 ya da mp3
+    quality: str = "192"  # sadece mp3 için geçerli: 64, 128, 192, 320
 
 def get_downloads_path():
     downloads_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
@@ -16,37 +18,54 @@ def get_downloads_path():
     return downloads_path
 
 @app.post("/download/")
-async def download_video(video: VideoURL):
-    if not video.url.strip():
+async def download_media(req: DownloadRequest):
+    if not req.url.strip():
         raise HTTPException(status_code=400, detail="URL boş olamaz!")
-    
+
     save_path = get_downloads_path()
-    
+
     try:
-        ydl_opts = {
-             'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-             'outtmpl': f'{save_path}/%(title)s.%(ext)s',
-             'postprocessors': [{
-                 'key': 'FFmpegVideoConvertor',
-                 'preferedformat': 'mp4',
-             }],
-        }
-        
+        if req.format == "mp3":
+            ydl_opts = {
+                'format': 'bestaudio/best',
+                'outtmpl': f'{save_path}/%(title)s.%(ext)s',
+                'postprocessors': [{
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'mp3',
+                    'preferredquality': req.quality
+                }],
+                'quiet': True,
+            }
+        elif req.format == "mp4":
+            ydl_opts = {
+                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'outtmpl': f'{save_path}/%(title)s.%(ext)s',
+                'postprocessors': [{
+                    'key': 'FFmpegVideoConvertor',
+                    'preferedformat': 'mp4',
+                }],
+                'quiet': True,
+            }
+        else:
+            raise HTTPException(status_code=400, detail="Geçersiz format seçimi. mp3 veya mp4 olmalı.")
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(video.url, download=True)
-            video_title = info.get('title', None)
-            file_path = ydl.prepare_filename(info)  # İndirilen dosyanın tam yolu
-        
-        # Dosya doğrudan istemciye gönderilir
+            info = ydl.extract_info(req.url, download=True)
+            file_path = ydl.prepare_filename(info)
+
+        # Uzantıyı güncelle (mp3 için gerekebilir)
+        if req.format == "mp3":
+            file_path = os.path.splitext(file_path)[0] + ".mp3"
+
         return FileResponse(
             path=file_path,
             filename=os.path.basename(file_path),
-            media_type='video/mp4'
+            media_type='audio/mpeg' if req.format == "mp3" else 'video/mp4'
         )
-            
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"İndirme hatası: {str(e)}")
 
 @app.get("/")
 async def root():
-    return {"mesaj": "Video İndirme API'sine Hoş Geldiniz"}
+    return {"mesaj": "Video/Müzik İndirme API'sine Hoş Geldiniz 🎵🎬"}
