@@ -8,8 +8,7 @@ app = FastAPI()
 
 class DownloadRequest(BaseModel):
     url: str
-    format: str = "mp4"  # mp4 ya da mp3
-    quality: str = "192"  # sadece mp3 için geçerli: 64, 128, 192, 320
+    format: str = "mp4"  # mp4 veya mp3
 
 def get_downloads_path():
     downloads_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
@@ -32,18 +31,15 @@ async def download_media(req: DownloadRequest):
                 'postprocessors': [{
                     'key': 'FFmpegExtractAudio',
                     'preferredcodec': 'mp3',
-                    'preferredquality': req.quality
+                    'preferredquality': '0',  # En yüksek kaliteyi seçer
                 }],
                 'quiet': True,
             }
         elif req.format == "mp4":
             ydl_opts = {
-                'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                'format': 'bestvideo+bestaudio/best',
                 'outtmpl': f'{save_path}/%(title)s.%(ext)s',
-                'postprocessors': [{
-                    'key': 'FFmpegVideoConvertor',
-                    'preferedformat': 'mp4',
-                }],
+                'merge_output_format': 'mp4',
                 'quiet': True,
             }
         else:
@@ -53,7 +49,6 @@ async def download_media(req: DownloadRequest):
             info = ydl.extract_info(req.url, download=True)
             file_path = ydl.prepare_filename(info)
 
-        # Uzantıyı güncelle (mp3 için gerekebilir)
         if req.format == "mp3":
             file_path = os.path.splitext(file_path)[0] + ".mp3"
 
