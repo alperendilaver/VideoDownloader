@@ -72,4 +72,4 @@ async def download_media(req: DownloadRequest):
 
 @app.api_route("/", methods=["GET", "HEAD"])
 async def root():
-    return {"mesaj": "Video/Müzik İndirme API'sine Hoş Geldiniz 🎵🎬"}
+    return {"."}
