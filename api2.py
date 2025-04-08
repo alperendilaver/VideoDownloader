@@ -70,6 +70,6 @@ async def download_media(req: DownloadRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"İndirme hatası: {str(e)}")
 
-@app.get("/")
+@app.api_route("/", methods=["GET", "HEAD"])
 async def root():
     return {"mesaj": "Video/Müzik İndirme API'sine Hoş Geldiniz 🎵🎬"}
