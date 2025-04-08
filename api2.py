@@ -56,8 +56,10 @@ async def download_media(req: DownloadRequest):
             info = ydl.extract_info(req.url, download=True)
             file_path = ydl.prepare_filename(info)
 
+        # mp3 formatındaysa dosya adının uzantısını elle değiştir
         if req.format == "mp3":
             file_path = os.path.splitext(file_path)[0] + ".mp3"
+
 
         return FileResponse(
             path=file_path,
